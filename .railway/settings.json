@@ -1,5 +1,5 @@
 {
-  "buildCommand": "composer install",
+  "buildCommand": "composer install --ignore-platform-req=ext-intl",
   "startCommand": "composer start",
-  "installCommand": "composer install"
+  "installCommand": "composer install --ignore-platform-req=ext-intl"
 }
