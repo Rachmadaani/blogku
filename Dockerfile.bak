@@ -1,6 +1,11 @@
 # Gunakan image PHP 8.1 dengan Apache
 FROM php:8.1-apache
 
+# Install intl extension
+RUN apt-get update && apt-get install -y \
+    libicu-dev \
+    && docker-php-ext-install intl
+
 # Install ekstensi yang dibutuhkan oleh CodeIgniter 4
 RUN apt-get update && apt-get install -y \
     libicu-dev libzip-dev unzip git curl \
