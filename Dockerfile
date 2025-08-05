@@ -1,43 +1,43 @@
 # Gunakan image PHP 8.1 dengan Apache
 FROM php:8.1-apache
 
-# Install intl extension
+# Install dependencies & ekstensi PHP yang dibutuhkan CodeIgniter 4
 RUN apt-get update && apt-get install -y \
     libicu-dev \
-    && docker-php-ext-install intl
-
-# Install ekstensi yang dibutuhkan oleh CodeIgniter 4
-RUN apt-get update && apt-get install -y \
-    libicu-dev libzip-dev unzip git curl \
+    libzip-dev \
+    unzip \
+    zip \
+    git \
+    curl \
     && docker-php-ext-install intl pdo pdo_mysql zip
 
-# Aktifkan mod_rewrite Apache
+# Aktifkan Apache mod_rewrite (dibutuhkan oleh CI4)
 RUN a2enmod rewrite
 
-# Atur document root ke folder public
+# Atur agar document root Apache ada di folder public/
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 
-# Update konfigurasi Apache agar root folder-nya pakai public/
-RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf \
-    && sed -ri -e 's!/var/www/!/var/www/html/public!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+# Ubah semua konfigurasi agar Apache root-nya jadi folder public/
+RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf && \
+    sed -ri -e 's!/var/www/!/var/www/html/public!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Copy semua file project ke dalam container
-COPY . /var/www/html
-
-# Set permission supaya bisa diakses Apache
-RUN chown -R www-data:www-data /var/www/html
-
-# Pindah ke folder kerja proyek
+# Set direktori kerja ke dalam container
 WORKDIR /var/www/html
 
-# Salin composer dari image resmi composer
+# Salin semua file project ke dalam container
+COPY . .
+
+# Salin binary composer dari image resmi composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install dependency CI4 (optimize autoloader & abaikan ekstensi lokal)
-RUN composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-intl
+# Install dependency CodeIgniter 4 (dengan optimasi)
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
-# Expose port 80 untuk Railway atau hosting lainnya
+# Set permission supaya bisa dibaca Apache (opsional tapi direkomendasikan)
+RUN chown -R www-data:www-data /var/www/html
+
+# Expose port 80 untuk Railway
 EXPOSE 80
 
-# Jalankan Apache saat container start
+# Jalankan Apache saat container dijalankan
 CMD ["apache2-foreground"]
